@@ -348,7 +348,8 @@ parse_bin_deps(Bin, Deps) ->
 needs_link(SoName, []) ->
     filelib:last_modified(SoName) == 0;
 needs_link(SoName, NewBins) ->
-    MaxLastMod = lists:max([filelib:last_modified(B) || B <- NewBins]),
+    NewBinsAndEi = [lists:concat([erl_interface_dir(lib), "/", "libei.a"]) | NewBins],
+    MaxLastMod = lists:max([filelib:last_modified(B) || B <- NewBinsAndEi]),
     case filelib:last_modified(SoName) of
         0 ->
             true;
