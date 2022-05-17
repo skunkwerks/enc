@@ -34,6 +34,7 @@
          info/2]).
 
 -include("rebar.hrl").
+-include_lib("kernel/include/file.hrl").
 
 -record(spec, {type::'drv' | 'exe',
                link_lang::'cc' | 'cxx',
@@ -349,12 +350,14 @@ needs_link(SoName, []) ->
     filelib:last_modified(SoName) == 0;
 needs_link(SoName, NewBins) ->
     NewBinsAndEi = [lists:concat([erl_interface_dir(lib), "/", "libei.a"]) | NewBins],
-    MaxLastMod = lists:max([filelib:last_modified(B) || B <- NewBinsAndEi]),
+    FileInfos = [element(2, X) || X <- [file:read_file_info(F) || F <- NewBinsAndEi], element(1, X) == ok],
+    MaxLastMtime = lists:max([F#file_info.mtime || F <- FileInfos]),
+    MaxLastCtime = lists:max([F#file_info.ctime || F <- FileInfos]),
     case filelib:last_modified(SoName) of
         0 ->
             true;
         Other ->
-            MaxLastMod >= Other
+            (MaxLastMtime >= Other) and (MaxLastCtime >= Other)
     end.
 
 %%
